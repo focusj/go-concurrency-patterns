@@ -20,7 +20,7 @@ type Message struct {
 //             |  ------> fanIn ------>|
 // chan2 ------                         ------> msg2/waitChan
 func main() {
-	c := fanIn(boring("Lily"), boring("Lucy"))
+	c := fanInSelect(boring("Lily"), boring("Lucy"))
 
 	for i := 0; i < 5; i++ {
 		msg1 := <-c
@@ -50,6 +50,21 @@ func fanIn(chan1, chan2 <-chan Message) <-chan Message {
 		}
 	}()
 
+	return c
+}
+
+func fanInSelect(chan1, chan2 <-chan Message) <-chan Message {
+	c := make(chan Message)
+	go func() {
+		for {
+			select {
+			case s := <-chan1:
+				c <- s
+			case s := <-chan2:
+				c <- s
+			}
+		}
+	}()
 	return c
 }
 
