@@ -25,9 +25,9 @@ func fakeSearch(kind string) Search {
 
 func Google(query string) (result []Result) {
 	c := make(chan Result)
-	go func() { c <- Web(query) }()
-	go func() { c <- Image(query) }()
-	go func() { c <- Video(query) }()
+	go func() { c <- First(query, Web) }()
+	go func() { c <- First(query, Image) }()
+	go func() { c <- First(query, Video) }()
 
 	timeout := time.After(80 * time.Millisecond)
 	for i := 0; i < 3; i++ {
@@ -41,6 +41,16 @@ func Google(query string) (result []Result) {
 	}
 
 	return result
+}
+
+func First(query string, replicas ...Search) Result {
+	r := make(chan Result)
+	for _, replica := range replicas {
+		go func() {
+			r <- replica(query)
+		}()
+	}
+	return <-r
 }
 
 func main() {
