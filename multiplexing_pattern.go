@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 )
 
@@ -25,7 +26,7 @@ func boring(msg string) <-chan string {
 	go func() {
 		for i := 0; ; i++ {
 			c <- fmt.Sprintf("%s, %d", msg, i)
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(time.Duration(rand.Intn(1e3) * time.Millisecond))
 		}
 	}()
 	return c
@@ -34,8 +35,17 @@ func boring(msg string) <-chan string {
 func main() {
 	c := fanIn(boring("Joe"), boring("Ann"))
 
+	timeout := time.After(5 * time.Second)
+
 	for i := 0; i < 5; i++ {
-		fmt.Println(<-c)
+		select {
+		case msg <- c:
+			fmt.Println(msg)
+		case time.After(1 * time.Second) // timeout for selection timeout
+			fmt.Println("select timeout")
+		case timeout: // timeout for global execution
+			fmt.Println("global timeout")
+		}
 	}
 
 	fmt.Println("exit")
