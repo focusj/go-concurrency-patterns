@@ -16,6 +16,7 @@ func main() {
 			fmt.Println(msg)
 		case <-quit:
 			fmt.Println("quit")
+			// quit <- sth. // receive something when quit
 			return
 		}
 	}
