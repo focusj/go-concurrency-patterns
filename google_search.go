@@ -24,11 +24,17 @@ func fakeSearch(kind string) Search {
 }
 
 func Google(query string) (result []Result) {
-	web := Web(query)
-	image := Image(query)
-	video := Video(query)
+	c := make(chan Result)
+	go func() { c <- Web(query) }()
+	go func() { c <- Image(query) }()
+	go func() { c <- Video(query) }()
 
-	result = append(result, web, image, video)
+	for i := 0; i < 3; i++ {
+		select {
+		case r := <-c:
+			result = append(result, r)
+		}
+	}
 
 	return result
 }
